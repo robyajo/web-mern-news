@@ -68,5 +68,25 @@ export async function apiFetch<T>(
     const message = extractErrorMessage(json as ApiErrorBody);
     throw new Error(message);
   }
+  if (typeof window !== "undefined") {
+    const newToken = response.headers.get("x-access-token");
+    if (newToken) {
+      const expiresAtHeader = response.headers.get("x-access-expires-at");
+      const rawSession = window.localStorage.getItem("session.data");
+      let stored: any = {};
+      if (rawSession) {
+        try {
+          stored = JSON.parse(rawSession);
+        } catch {
+          stored = {};
+        }
+      }
+      stored.token = newToken;
+      if (expiresAtHeader) {
+        stored.expiresAt = expiresAtHeader;
+      }
+      window.localStorage.setItem("session.data", JSON.stringify(stored));
+    }
+  }
   return (json as ApiSuccess<T>).data;
 }

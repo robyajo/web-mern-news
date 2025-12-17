@@ -2,6 +2,13 @@ import { apiFetch } from "./api";
 
 const sessionKey = "session.data";
 
+function isExpired(expiresAt: string | null): boolean {
+  if (!expiresAt) return true;
+  const t = Date.parse(expiresAt);
+  if (Number.isNaN(t)) return true;
+  return t <= Date.now();
+}
+
 type LoginPayload = {
   email: string;
   password: string;
@@ -52,20 +59,25 @@ function readSessionFromStorage(): Session {
   }
   try {
     const parsed = JSON.parse(raw) as Partial<StoredSession>;
-    return {
+    const session: Session = {
       token: parsed.token ?? null,
       refreshToken: parsed.refreshToken ?? null,
       name: parsed.name ?? null,
       role: parsed.role ?? null,
       expiresAt: parsed.expiresAt ?? null,
     };
+    if (isExpired(session.expiresAt)) {
+      window.localStorage.removeItem(sessionKey);
+      return emptySession();
+    }
+    return session;
   } catch {
     return emptySession();
   }
 }
 
 export async function login(payload: LoginPayload): Promise<LoginData> {
-  const data = await apiFetch<LoginData>("/auth/login", {
+  const data = await apiFetch<LoginData>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify(payload),
   });
@@ -109,7 +121,7 @@ export async function logout(): Promise<string | null> {
   let message: string | null = null;
   try {
     const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
-    const url = `${apiBaseUrl}/auth/logout`;
+    const url = `${apiBaseUrl}/api/auth/logout`;
     const headers = new Headers();
     headers.set("Content-Type", "application/json");
     const current = readSessionFromStorage();

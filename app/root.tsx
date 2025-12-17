@@ -7,12 +7,24 @@ import {
   ScrollRestoration,
   Link,
   useLocation,
+  useNavigate,
 } from "react-router";
 import { useEffect, useState } from "react";
 import type { Route } from "./+types/root";
 import "./app.css";
-import { Toaster } from "sonner";
-import { getSession } from "./utils/auth";
+import { Toaster, toast } from "sonner";
+import { getSession, logout } from "./utils/auth";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./components/ui/alert-dialog";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -48,12 +60,24 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const session = getSession();
     setIsLoggedIn(!!session.token);
   }, [location.pathname]);
+
+  async function handleLogout() {
+    const message = await logout();
+    if (message) {
+      toast.success(message);
+    } else {
+      toast.success("Berhasil logout");
+    }
+    setIsLoggedIn(false);
+    navigate("/login", { replace: true });
+  }
 
   return (
     <>
@@ -73,13 +97,46 @@ export default function App() {
               Home
             </Link>
             {isLoggedIn ? (
-              <Link
-                viewTransition
-                to="/dashboard"
-                className="text-sm font-medium text-gray-700 hover:text-blue-600"
-              >
-                Dashboard
-              </Link>
+              <>
+                <Link
+                  viewTransition
+                  to="/dashboard"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  viewTransition
+                  to="/dashboard/posts"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  MyPost
+                </Link>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      type="button"
+                      className="text-sm font-medium text-red-600 hover:text-red-700"
+                    >
+                      Logout
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Konfirmasi Logout</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Apakah Anda yakin ingin keluar dari sesi ini?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Batal</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleLogout}>
+                        Logout
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             ) : (
               <Link
                 viewTransition

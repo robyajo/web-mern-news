@@ -1,19 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import type { Route } from "./+types/dashboard";
-import { getSession, logout, type Session } from "../utils/auth";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "../components/ui/alert-dialog";
+import { getSession, type Session } from "../utils/auth";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -41,16 +29,6 @@ export default function Dashboard() {
     }
   }, [navigate]);
 
-  async function handleLogout() {
-    const message = await logout();
-    if (message) {
-      toast.success(message);
-    } else {
-      toast.success("Berhasil logout");
-    }
-    navigate("/login", { replace: true });
-  }
-
   if (!session.token) {
     return null;
   }
@@ -70,28 +48,6 @@ export default function Dashboard() {
           <span className="font-medium">{session.expiresAt ?? "-"}</span>
         </p>
       </div>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <button
-            type="button"
-            className="bg-red-600 text-white px-4 py-2 rounded"
-          >
-            Logout
-          </button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Konfirmasi Logout</AlertDialogTitle>
-            <AlertDialogDescription>
-              Apakah Anda yakin ingin keluar dari sesi ini?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={handleLogout}>Logout</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </main>
   );
 }
