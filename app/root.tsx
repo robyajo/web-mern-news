@@ -5,10 +5,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  Link,
+  useLocation,
 } from "react-router";
-
+import { useEffect, useState } from "react";
 import type { Route } from "./+types/root";
 import "./app.css";
+import { Toaster } from "sonner";
+import { getSession } from "./utils/auth";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -33,6 +37,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
+        <Toaster />
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -42,7 +47,54 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const location = useLocation();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const session = getSession();
+    setIsLoggedIn(!!session.token);
+  }, [location.pathname]);
+
+  return (
+    <>
+      <header className="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-10">
+        <div className="container mx-auto flex items-center justify-between px-4 py-3">
+          <div className="font-semibold text-lg">
+            <Link viewTransition to="/">
+              MERN News
+            </Link>
+          </div>
+          <nav className="flex items-center gap-4">
+            <Link
+              viewTransition
+              to="/"
+              className="text-sm font-medium text-gray-700 hover:text-blue-600"
+            >
+              Home
+            </Link>
+            {isLoggedIn ? (
+              <Link
+                viewTransition
+                to="/dashboard"
+                className="text-sm font-medium text-gray-700 hover:text-blue-600"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                viewTransition
+                to="/login"
+                className="text-sm font-medium text-blue-600 hover:text-blue-700"
+              >
+                Login
+              </Link>
+            )}
+          </nav>
+        </div>
+      </header>
+      <Outlet />
+    </>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
