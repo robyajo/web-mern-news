@@ -44,39 +44,53 @@ npm run build
 
 ## Deployment
 
-### Docker Deployment
+### Menjalankan dengan PM2 (Production, 1 Server dengan API)
 
-To build and run using Docker:
+Misal backend `api-news` berjalan di port `4000`, dan frontend `web-news` di port `3000` via React Router serve.
+
+1. Build aplikasi:
 
 ```bash
-docker build -t my-app .
-
-# Run the container
-docker run -p 3000:3000 my-app
+npm run build
 ```
 
-The containerized application can be deployed to any platform that supports Docker, including:
+2. Buat file `ecosystem.config.js` di root monorepo (sejajar dengan folder `api-news` dan `web-news`):
 
-- AWS ECS
-- Google Cloud Run
-- Azure Container Apps
-- Digital Ocean App Platform
-- Fly.io
-- Railway
-
-### DIY Deployment
-
-If you're familiar with deploying Node applications, the built-in app server is production-ready.
-
-Make sure to deploy the output of `npm run build`
-
+```js
+module.exports = {
+  apps: [
+    {
+      name: "api-news",
+      cwd: "./api-news",
+      script: "dist/index.js",
+      env: {
+        NODE_ENV: "production",
+        PORT: 4000,
+      },
+    },
+    {
+      name: "web-news",
+      cwd: "./web-news",
+      script: "node_modules/.bin/react-router-serve",
+      args: "./build/server/index.js",
+      env: {
+        NODE_ENV: "production",
+        PORT: 3000,
+      },
+    },
+  ],
+};
 ```
-├── package.json
-├── package-lock.json (or pnpm-lock.yaml, or bun.lockb)
-├── build/
-│   ├── client/    # Static assets
-│   └── server/    # Server-side code
+
+3. Jalankan dengan PM2:
+
+```bash
+pm2 start ecosystem.config.js
+pm2 save
+pm2 startup
 ```
+
+Frontend akan tersedia di `http://localhost:3000` (bisa diarahkan melalui Nginx), dan backend di `http://localhost:4000`.
 
 ## Styling
 
